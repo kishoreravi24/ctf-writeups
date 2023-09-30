@@ -1,0 +1,12 @@
+md2pdf
+
+	* port scanning: nmap -sC -sV 10.10.162.116 -v
+		* Got port 80 for http server and 5000 for rtsp (real time streaming protocol)
+		* tried 80 okay working, 5000 some bit low html
+	* directory scanning: gobuster
+		/admin
+	* tried with 80 says try with localhost 5000
+	* tried with 5000 still forbidden
+	* md -> pdf , in port 80 use iframe that will trigger the call to /admin
+	* <iframe src="http://localhost:5000/admin"></iframe>
+	Got the flag
