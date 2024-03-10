@@ -1,0 +1,22 @@
+analytics htb
+
+common:
+    * save every htb domain in sudo vi /etc/hosts
+* nmap -sCV -p- {ip} or nmap -sCV {ip}
+* Seeing the result follow redirect to analytics to analytical
+* analytical.htb having login metabase
+* try metabase in msfconsole i.e metasploit
+    * to start the msfconsole please start the msfdb by sudo msfdb start
+* msfconsole -> search metabase no, not available
+* check the console you can see the api whitelisted or check network tab
+* metabase exploit available use that
+* get shell, no user.txt available
+* try env
+* env shows the user and password
+* use ssh to login
+* user.txt found
+* sudo -l not works
+* uname -a get the version and try to see their is some exploit available
+* found cd ../../tmp
+* exploit.sh present use that
+* got the root flag
