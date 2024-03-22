@@ -1,0 +1,13 @@
+Opacity thm
+	* gobuster
+	* /cloud/ route able to upload image trying remote file inclusion
+	* php-reverse-shell from pentestmonkey and change the ip address to the thm ip address
+	* uploading got error because of extension security
+	* instead of changing in the burp, we can do like php-reverse-shell.php#.jpg
+	* using nc -lvpn got the shell
+	* dataset.kdbx
+	* keepass2john -> hash
+	* john wordlists hash
+	* got the passcode
+	* keepass web info, upload dataset and passcode, got the password
+	* now in shell sysadmin password got the local.txt
